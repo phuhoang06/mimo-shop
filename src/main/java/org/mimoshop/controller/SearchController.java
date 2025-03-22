@@ -30,7 +30,7 @@ public class SearchController {
 
         List<Product> products = searchService.searchProducts(query, searchType);
         List<ProductResponse> productResponses = products.stream()
-                .map(productMapper::toResponse) // Sử dụng ProductMapper
+                .map(productMapper::toResponse)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(productResponses);
     }

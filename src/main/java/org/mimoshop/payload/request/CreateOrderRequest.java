@@ -13,17 +13,16 @@ import java.util.Map;
 @Setter
 public class CreateOrderRequest {
 
-    @NotBlank(message = "Customer name cannot be blank") // Validate không được rỗng
+    @NotBlank(message = "Customer name is required")
     private String customerName;
 
-    @NotBlank(message = "Customer phone cannot be blank")
-    @Pattern(regexp = "\\d{10,11}", message = "Invalid phone number") // Validate số điện thoại (10-11 chữ số)
+    @NotBlank(message = "Customer phone is required")
+    @Pattern(regexp = "\\d{10}", message = "Invalid phone number format") // Validate 10 digits
     private String customerPhone;
 
-    @NotBlank(message = "Customer address cannot be blank")
+    @NotBlank(message = "Customer address is required")
     private String customerAddress;
 
-    @NotEmpty(message = "Product list cannot be empty")
-    // Key: productId, Value: quantity
+    @NotEmpty(message = "Product quantities must not be empty") // Sửa thành @NotEmpty
     private Map<Long, Integer> productQuantities;
 }

@@ -10,19 +10,19 @@ import java.util.List;
 @Getter
 @Setter
 public class CreateProductRequest {
-
-    @NotBlank(message = "Product name cannot be blank")
+    @NotBlank(message = "Product name is required")
     private String name;
 
-    private String description; // Không bắt buộc
+    private String description;
 
-    @NotNull(message = "Price cannot be null")
-    @Positive(message = "Price must be positive")
+    @NotNull(message = "Price is required")
+    @Positive(message = "Price must be a positive value")
     private Double price;
 
-    private String imageUrl; // Không bắt buộc
+    private String imageUrl;
 
-    @NotNull(message = "Category ID cannot be null")
+    @NotNull(message = "Category ID is required")
     private Long categoryId;
-    private List<String> tagNames;
+
+    private List<String> tagNames; //sử dụng tên của tag
 }

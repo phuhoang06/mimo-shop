@@ -20,6 +20,6 @@ public class Tag {
     @Column(nullable = false, unique = true)
     private String name;
 
-    @ManyToMany(mappedBy = "tags")
+    @ManyToMany(mappedBy = "tags") // Bỏ ProductTag
     private List<Product> products;
 }

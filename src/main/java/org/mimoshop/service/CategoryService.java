@@ -27,7 +27,7 @@ public class CategoryService {
     public Category getCategoryByName(String name)
     {
         Category category = categoryRepository.findByNameIgnoreCase(name);
-         if (category == null) {
+        if (category == null) {
             throw new ResourceNotFoundException("Category not found with name: " + name);
         }
         return category;
@@ -47,7 +47,11 @@ public class CategoryService {
         if (existingCategory != null && !existingCategory.getId().equals(id)) {
             throw new IllegalArgumentException("Category with name '" + categoryDetails.getName() + "' already exists.");
         }
-        category.setName(categoryDetails.getName());
+        // Kiểm tra null trước khi set
+        if (categoryDetails.getName() != null) {
+            category.setName(categoryDetails.getName());
+        }
+
         return categoryRepository.save(category);
     }
 

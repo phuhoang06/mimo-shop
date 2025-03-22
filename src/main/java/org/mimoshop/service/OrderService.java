@@ -26,9 +26,9 @@ public class OrderService {
 
     @Autowired
     private OrderItemRepository orderItemRepository;
+
     @Autowired
     private ProductRepository productRepository;
-
 
     public List<Order> getAllOrders() {
         return orderRepository.findAll();
@@ -38,60 +38,61 @@ public class OrderService {
         return orderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + id));
     }
+
     public Order createOrder(Order order, Map<Long, Integer> productQuantities) {
         // 1. Kiểm tra null cho order
         if (order == null) {
             throw new IllegalArgumentException("Order cannot be null");
         }
 
-        // 2. KHÔNG lưu Order ở đây.  Bỏ dòng này:
-        // order = orderRepository.save(order);
-
-        // 3. Kiểm tra null/empty cho productQuantities
+        // 2. Kiểm tra null/empty cho productQuantities
         if (productQuantities == null || productQuantities.isEmpty()) {
             throw new IllegalArgumentException("Product quantities cannot be null or empty");
         }
 
-        // 4. Lấy thông tin sản phẩm
-        List<Long> productIds = productQuantities.keySet().stream().toList();
+        // 3. Lấy thông tin sản phẩm và kiểm tra
+        List<Long> productIds = productQuantities.keySet().stream().toList(); // Chuyển keySet thành List
         List<Product> products = productRepository.findByIdIn(productIds);
+
         if (products.size() != productIds.size()) {
-            throw new ResourceNotFoundException("One or more products not found");
+            // Tìm ID sản phẩm không tìm thấy
+            List<Long> foundProductIds = products.stream().map(Product::getId).collect(Collectors.toList());
+            productIds.removeAll(foundProductIds); // Các ID không tìm thấy sẽ còn lại trong productIds
+            throw new ResourceNotFoundException("Products not found with ids: " + productIds);
         }
+        // Tạo Map để tra cứu sản phẩm theo ID cho nhanh
         Map<Long, Product> productMap = products.stream().collect(Collectors.toMap(Product::getId, product -> product));
 
 
-        // 5. Tính totalAmount và *TẠO* OrderItem (nhưng CHƯA lưu)
+        // 4. Tính totalAmount và tạo OrderItem (NHƯNG CHƯA LƯU OrderItem)
         double totalAmount = 0.0;
         for (Long productId : productQuantities.keySet()) {
-            Product product = productMap.get(productId);
+            Product product = productMap.get(productId); // Lấy từ Map, đã kiểm tra tồn tại ở trên rồi
             Integer quantity = productQuantities.get(productId);
 
-            if (product == null) {
-                throw new ResourceNotFoundException("Product with id " + productId + " not found");
-            }
+
             if (quantity == null || quantity <= 0) {
                 throw new IllegalArgumentException("Invalid quantity for product with id: " + productId);
             }
 
             OrderItem orderItem = new OrderItem();
-            orderItem.setOrder(order);  // Set Order (vẫn transient)
+            orderItem.setOrder(order); // Set Order (vẫn là transient)
             orderItem.setProduct(product);
             orderItem.setQuantity(quantity);
-            orderItem.setPrice(product.getPrice());
+            orderItem.setPrice(product.getPrice()); // Lấy giá từ Product
             // KHÔNG lưu OrderItem ở đây
-            // orderItemRepository.save(orderItem);
 
             totalAmount += product.getPrice() * quantity;
         }
 
-        // *SAU KHI* tính xong totalAmount:
-        // 6. Set totalAmount cho Order
+        // 5. Set totalAmount cho Order *TRƯỚC KHI LƯU*
         order.setTotalAmount(totalAmount);
-        // 7. Lưu Order (lúc này đã có totalAmount)
+
+        // 6. *LƯU* Order (lúc này đã có totalAmount và id sẽ được generate)
         Order savedOrder = orderRepository.save(order);
 
-        // 8. *SAU KHI* Order đã được lưu (có ID), lưu các OrderItem:
+
+        // 7. *SAU KHI* Order đã được lưu (có ID), *LƯU* các OrderItem:
         for (Long productId : productQuantities.keySet()) {
             Product product = productMap.get(productId);
             Integer quantity = productQuantities.get(productId);
@@ -103,6 +104,7 @@ public class OrderService {
             orderItemRepository.save(orderItem);
         }
 
-        return savedOrder; // Trả về Order đã lưu
+
+        return savedOrder; // Trả về Order đã lưu (có ID, totalAmount, và các OrderItem)
     }
 }

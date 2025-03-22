@@ -16,10 +16,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
-@Transactional // Đảm bảo tính toàn vẹn dữ liệu (hoặc rollback nếu có lỗi)
+@Transactional
 public class ProductService {
 
     @Autowired
@@ -56,19 +55,33 @@ public class ProductService {
         Product product = getProductById(id); // Sử dụng lại getProductById để đảm bảo tìm thấy và ném ngoại lệ nếu không
 
         // Cập nhật thông tin cơ bản của sản phẩm
-        product.setName(productDetails.getName());
-        product.setDescription(productDetails.getDescription());
-        product.setPrice(productDetails.getPrice());
-        product.setImageUrl(productDetails.getImageUrl());
+        // Kiểm tra null trước khi set
+        if (productDetails.getName() != null) {
+            product.setName(productDetails.getName());
+        }
+        if (productDetails.getDescription() != null) {
+            product.setDescription(productDetails.getDescription());
+        }
+        if (productDetails.getPrice() != null) {
+            product.setPrice(productDetails.getPrice());
+        }
+        if (productDetails.getImageUrl() != null) {
+            product.setImageUrl(productDetails.getImageUrl());
+        }
 
         // Cập nhật danh mục
-        Category category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + categoryId));
-        product.setCategory(category);
+        if(categoryId!=null){
+            Category category = categoryRepository.findById(categoryId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + categoryId));
+            product.setCategory(category);
+        }
 
         // Xử lý tags
-        List<Tag> tags = getOrCreateTags(tagNames); // Sử dụng lại phương thức getOrCreateTags
-        product.setTags(tags);
+        if(tagNames!=null){
+            List<Tag> tags = getOrCreateTags(tagNames); // Sử dụng lại phương thức getOrCreateTags
+            product.setTags(tags);
+        }
+
 
         return productRepository.save(product); // Lưu các thay đổi
     }
@@ -86,6 +99,10 @@ public class ProductService {
     public Page<Product> getProductsByCategory(Long categoryId, Pageable pageable) {
         return productRepository.findByCategoryId(categoryId, pageable);
     }
+    public List<Product> getProductsByTags(List<String> tagNames) {
+        List<Tag> tags = tagRepository.findByNameIn(tagNames);
+        return productRepository.findByTagsIn(tags);
+    }
 
     //lấy ra list tag từ list string tag name,  nếu tag chưa tồn tại thì tạo mới
     private List<Tag> getOrCreateTags(List<String> tagNames) {
@@ -94,15 +111,15 @@ public class ProductService {
             return tags; // Trả về danh sách rỗng nếu không có tagNames
         }
         for (String tagName : tagNames) {
-            Tag tag = tagRepository.findByName(tagName.trim());
+            Tag tag = tagRepository.findByName(tagName);
             if (tag == null) {
                 tag = new Tag();
-                tag.setName(tagName.trim());
+                tag.setName(tagName);
                 tag = tagRepository.save(tag); // Tạo mới và lưu tag
             }
             tags.add(tag);
         }
         return tags;
     }
-     // Các phương thức khác liên quan đến logic của sản phẩm (nếu cần)
+    // Các phương thức khác liên quan đến logic của sản phẩm (nếu cần)
 }

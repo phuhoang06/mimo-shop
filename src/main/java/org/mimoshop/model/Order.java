@@ -7,6 +7,8 @@ import java.util.List;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -28,7 +30,8 @@ public class Order {
     @Column(nullable = false)
     private String customerAddress;
 
-    @Temporal(TemporalType.TIMESTAMP) // Lưu cả ngày và giờ đặt hàng
+    @CreationTimestamp // Dùng annotation cho gọn
+    @Temporal(TemporalType.TIMESTAMP)
     @Column(nullable = false)
     private Date orderDate;
 
@@ -36,10 +39,5 @@ public class Order {
     private Double totalAmount;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<OrderItem> orderItems = new ArrayList<>();
-
-    @PrePersist
-    protected void onCreate() {
-        orderDate = new Date(); // Set thời gian hiện tại khi tạo đơn hàng
-    }
+    private List<OrderItem> orderItems = new ArrayList<>(); // Khởi tạo
 }
